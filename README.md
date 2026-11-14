@@ -47,9 +47,9 @@ Required fields per entry:
 | `cost.usd` | Spend if known, otherwise `null` |
 | `outcome` | Short result summary |
 
-Prefer provider-billed cost (e.g. OpenRouter `usage.cost` / generation
-`total_cost`) over price-table estimates — see `skills/session-ledger/SKILL.md`
-(`cost` section).
+Prefer provider-billed **per-turn** cost (OpenRouter `usage.cost` / generation
+`total_cost`), not `/activity` aggregates. Management key setup and `.env`
+variable names: `skills/session-ledger/references/openrouter-cost.md`.
 
 See `skills/session-ledger/assets/day.example.yaml` and `skills/session-ledger/references/entry.schema.yaml`.
 
