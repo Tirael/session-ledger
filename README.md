@@ -1,5 +1,7 @@
 # session-ledger
 
+**English** · [Русский](README.ru.md)
+
 Agent skill that appends a **local YAML ledger** after each turn: what was asked, which model path ran, where it sits on the session timeline (`T0 + …`), how long it took, token use, and (when known) cost.
 
 Host-agnostic: works with Cursor, Claude Code, Codex, Gemini CLI, and any Agent Skills–compatible agent.
