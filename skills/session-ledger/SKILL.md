@@ -121,36 +121,18 @@ Field rules:
 Prefer the **actual amount charged by the provider**, not a hand-calculated
 estimate from a price table.
 
-**OpenRouter (and similar gateways):**
+**OpenRouter (summary):**
 
-1. Read cost from the API response `usage` object when present:
-   - Chat Completions: `usage.cost` (and token fields
-     `prompt_tokens` / `completion_tokens`)
-   - Responses API: `usage.cost` (and `input_tokens` / `output_tokens`)
-2. If the stream/host omits cost but you have a generation id, fetch
-   `GET https://openrouter.ai/api/v1/generation?id=gen-…` and use
-   `total_cost`.
-3. Map into the ledger:
-
-   ```yaml
-   tokens:
-     input: 9200       # usage.prompt_tokens / input_tokens
-     output: 1100      # usage.completion_tokens / output_tokens
-   cost:
-     usd: 0.0015       # usage.cost or total_cost
-     note: openrouter  # billed figure from provider, not estimate
-   ```
-
-4. Several model calls in one turn → **sum** costs and token counts for the
-   turn.
-5. If `cost` / `total_cost` is missing → `usd: null`, `note: unknown`.
-   Do not invent spend from a static price list.
-6. OpenRouter reports cost in **credits**. When 1 credit = $1 for the
-   account, store the number in `cost.usd` as-is. If credits are not 1:1
-   with USD, convert first and set `note` accordingly
-   (e.g. `openrouter-credits`).
-7. If the agent runs inside a host that hides the OpenRouter payload and
-   does not surface spend → leave `usd: null` until the host exposes it.
+1. **Per-turn ledger cost → `usage.cost` on the completion/Responses response**
+   (fallback: generation `total_cost`). Sum if the turn made several calls.
+2. **Do not use `GET /api/v1/activity` for turn rows** — it returns daily /
+   endpoint aggregates. A 403 there usually means a normal inference key was
+   used; that does not block ledger cost if `usage.cost` is available.
+3. Management key (for `/activity` and other admin APIs only): create at
+   https://openrouter.ai/settings/management-keys — details, storage
+   (`OPENROUTER_MANAGEMENT_KEY` in gitignored `.env`), and full mapping are in
+   `references/openrouter-cost.md`.
+4. Missing figure → `usd: null`, `note: unknown`. Never invent spend.
 
 Other providers: same rule — use the billed field from the response or
 usage API when available; otherwise `null`. Use `note: estimate` only when
@@ -207,3 +189,4 @@ If the product exposes a clearer label (e.g. plan name), put that string instead
 
 - Example day file: `assets/day.example.yaml`
 - Machine-readable shape: `references/entry.schema.yaml`
+- OpenRouter cost + Management key: `references/openrouter-cost.md`

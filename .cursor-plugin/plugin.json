@@ -1,7 +1,7 @@
 {
   "name": "session-ledger",
   "displayName": "Session Ledger",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Append a host-agnostic YAML ledger entry after each agent turn: timestamp, T0 + offset, duration, tokens, request, models, chosen variant, and cost.",
   "author": {
     "name": "Georgiy Zhuykov"
