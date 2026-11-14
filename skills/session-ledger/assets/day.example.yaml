@@ -38,10 +38,10 @@ entries:
     chosen_variant: alternative-1
     used_model: claude-opus-4-6
     cost:
-      usd: 0.04
-      note: estimate
+      usd: 0.0015
+      note: openrouter
     outcome: |
-      Locked entry schema on YAML with cost.usd, chosen_variant, duration_sec, and tokens.
+      Locked entry schema on YAML with cost.usd from OpenRouter usage.cost.
     files_touched:
       - skills/session-ledger/references/entry.schema.yaml
     tags:

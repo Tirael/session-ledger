@@ -54,8 +54,8 @@ entries:
     chosen_variant: "primary" # which answer path the user took (see below)
     used_model: "composer-2"  # model that actually ran this turn if known; else "unknown"
     cost:
-      usd: null               # number when known; null when unknown
-      note: "unknown"         # optional: "estimate", "from-ui", "unknown"
+      usd: null               # provider/host amount when known; null if unknown
+      note: "unknown"         # e.g. openrouter | estimate | from-ui | unknown
     outcome: |
       1–3 sentences: what you did or answered.
     files_touched: []         # relative paths you meaningfully edited; omit or [] if none
@@ -76,7 +76,8 @@ Field rules:
 | `requested_model` | yes | User intent / UI selection (`auto`, `claude`, slug, or `unknown`) |
 | `chosen_variant` | yes | See variants below |
 | `used_model` | yes | Actual model id/slug if available, else `unknown` |
-| `cost.usd` | yes | Number or `null` |
+| `cost.usd` | yes | Provider/host spend when known, else `null` (see `cost`) |
+| `cost.note` | no | Source of the figure (`openrouter`, `estimate`, …) |
 | `outcome` | yes | Brief result summary |
 | `files_touched` | no | Edited paths only |
 | `tags` | no | Sparse keywords |
@@ -115,6 +116,46 @@ Field rules:
 - Cache-read / cache-write tokens are optional extras — if you only have a
   single “input” figure, put it in `tokens.input` and leave extras out.
 
+### `cost`
+
+Prefer the **actual amount charged by the provider**, not a hand-calculated
+estimate from a price table.
+
+**OpenRouter (and similar gateways):**
+
+1. Read cost from the API response `usage` object when present:
+   - Chat Completions: `usage.cost` (and token fields
+     `prompt_tokens` / `completion_tokens`)
+   - Responses API: `usage.cost` (and `input_tokens` / `output_tokens`)
+2. If the stream/host omits cost but you have a generation id, fetch
+   `GET https://openrouter.ai/api/v1/generation?id=gen-…` and use
+   `total_cost`.
+3. Map into the ledger:
+
+   ```yaml
+   tokens:
+     input: 9200       # usage.prompt_tokens / input_tokens
+     output: 1100      # usage.completion_tokens / output_tokens
+   cost:
+     usd: 0.0015       # usage.cost or total_cost
+     note: openrouter  # billed figure from provider, not estimate
+   ```
+
+4. Several model calls in one turn → **sum** costs and token counts for the
+   turn.
+5. If `cost` / `total_cost` is missing → `usd: null`, `note: unknown`.
+   Do not invent spend from a static price list.
+6. OpenRouter reports cost in **credits**. When 1 credit = $1 for the
+   account, store the number in `cost.usd` as-is. If credits are not 1:1
+   with USD, convert first and set `note` accordingly
+   (e.g. `openrouter-credits`).
+7. If the agent runs inside a host that hides the OpenRouter payload and
+   does not surface spend → leave `usd: null` until the host exposes it.
+
+Other providers: same rule — use the billed field from the response or
+usage API when available; otherwise `null`. Use `note: estimate` only when
+the user or host explicitly provides an estimate (never silent guessing).
+
 ### `chosen_variant` values
 
 Use the closest match:
@@ -139,7 +180,9 @@ If the product exposes a clearer label (e.g. plan name), put that string instead
    ```
 
 3. Gather fields from this turn. Prefer facts over guesses:
-   - Model / cost / duration / since_t0 / tokens: use values from the host UI, tooling, or user message.
+   - Model / cost / duration / since_t0 / tokens: use values from the host UI,
+     provider response (`usage`), tooling, or user message.
+   - For OpenRouter (and similar), follow the `cost` section above.
    - If unknown, set `unknown` / `null` — do not invent spend, duration, T0 offset, or token counts.
 4. Append the new object under `entries`.
 5. Keep the rest of the reply normal; logging is silent unless the user asked
