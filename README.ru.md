@@ -47,6 +47,10 @@ session-ledger/YYYY-MM-DD.yaml
 | `cost.usd` | Стоимость, если известна, иначе `null` |
 | `outcome` | Краткий итог |
 
+Стоимость лучше брать из ответа провайдера (например OpenRouter:
+`usage.cost` или `total_cost` у generation), а не считать по прайсу —
+см. секцию `cost` в `skills/session-ledger/SKILL.md`.
+
 Имена полей в YAML — на английском (канон для агентов и парсеров).  
 См. `skills/session-ledger/assets/day.example.yaml` и `skills/session-ledger/references/entry.schema.yaml`.
 
