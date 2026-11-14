@@ -1,0 +1,93 @@
+# JSON Schema (YAML encoding) for one session-ledger day file.
+# Validators that accept YAML can load this as the document schema.
+$schema: https://json-schema.org/draft/2020-12/schema
+$title: SessionLedgerDay
+$type: object
+required: [date, entries]
+additionalProperties: false
+properties:
+  date:
+    type: string
+    pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    description: Calendar day of this file (YYYY-MM-DD).
+  entries:
+    type: array
+    items:
+      $ref: "#/$defs/entry"
+
+$defs:
+  entry:
+    type: object
+    required:
+      - id
+      - timestamp
+      - since_t0
+      - duration_sec
+      - tokens
+      - user_request
+      - requested_model
+      - chosen_variant
+      - used_model
+      - cost
+      - outcome
+    additionalProperties: false
+    properties:
+      id:
+        type: string
+        minLength: 1
+      timestamp:
+        type: string
+        description: ISO-8601 timestamp with offset.
+      since_t0:
+        type: string
+        description: >-
+          Session timeline mark relative to T0 (session start), e.g.
+          "T0 + 0s", "T0 + 20m50s", "T0 + 1h05m12s", bare "T0", or "unknown".
+        pattern: "^(T0|T0 \\+ (?:[0-9]+h(?:[0-9]+m)?(?:[0-9]+s)?|[0-9]+m(?:[0-9]+s)?|[0-9]+s)|unknown)$"
+      duration_sec:
+        type: ["integer", "null"]
+        minimum: 0
+        description: Wall-clock turn duration in whole seconds, or null if unknown.
+      tokens:
+        type: object
+        required: [input, output]
+        additionalProperties: false
+        properties:
+          input:
+            type: ["integer", "null"]
+            minimum: 0
+            description: Prompt / input token count for the turn, or null if unknown.
+          output:
+            type: ["integer", "null"]
+            minimum: 0
+            description: Completion / output token count for the turn, or null if unknown.
+      user_request:
+        type: string
+      requested_model:
+        type: string
+      chosen_variant:
+        type: string
+        description: >-
+          primary | alternative-N | follow-up | rejected | unknown | custom label
+      used_model:
+        type: string
+      cost:
+        type: object
+        required: [usd]
+        additionalProperties: false
+        properties:
+          usd:
+            type: ["number", "null"]
+            minimum: 0
+          note:
+            type: string
+      outcome:
+        type: string
+      files_touched:
+        type: array
+        items:
+          type: string
+      tags:
+        type: array
+        items:
+          type: string
