@@ -1,0 +1,48 @@
+# session-ledger daily log
+date: 2026-11-13
+entries:
+  - id: 2026-11-13T15-30-00Z-a1b2
+    timestamp: "2026-11-13T18:30:00+03:00"
+    since_t0: "T0 + 0s"
+    duration_sec: 420
+    tokens:
+      input: 18400
+      output: 2600
+    user_request: |
+      Scaffold a skill that logs each agent turn to YAML.
+    requested_model: auto
+    chosen_variant: primary
+    used_model: composer-2
+    cost:
+      usd: null
+      note: unknown
+    outcome: |
+      Added SKILL.md, YAML schema, example day file, and install notes for multiple agents.
+    files_touched:
+      - skills/session-ledger/SKILL.md
+      - skills/session-ledger/assets/day.example.yaml
+    tags:
+      - skill
+      - logging
+
+  - id: 2026-11-13T16-05-12Z-c3d4
+    timestamp: "2026-11-13T19:05:12+03:00"
+    since_t0: "T0 + 35m12s"
+    duration_sec: 95
+    tokens:
+      input: 9200
+      output: 1100
+    user_request: |
+      Prefer YAML over markdown; include cost, chosen variant, duration, T0 offset, and tokens.
+    requested_model: auto
+    chosen_variant: alternative-1
+    used_model: claude-opus-4-6
+    cost:
+      usd: 0.04
+      note: estimate
+    outcome: |
+      Locked entry schema on YAML with cost.usd, chosen_variant, duration_sec, and tokens.
+    files_touched:
+      - skills/session-ledger/references/entry.schema.yaml
+    tags:
+      - schema
