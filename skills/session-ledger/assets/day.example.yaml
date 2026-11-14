@@ -1,7 +1,11 @@
 # session-ledger daily log
-date: 2026-11-13
+schema_version: 1
+date: "2026-11-13"
 entries:
-  - id: 2026-11-13T15-30-00Z-a1b2
+  - id: "2026-11-13T15-30-00Z-a1b2"
+    session_id: "sess-2026-11-13-a1b2"
+    session_started_at: "2026-11-13T18:23:00+03:00"
+    host: cursor
     timestamp: "2026-11-13T18:30:00+03:00"
     since_t0: "T0 + 0s"
     duration_sec: 420
@@ -13,6 +17,7 @@ entries:
     requested_model: auto
     chosen_variant: primary
     used_model: composer-2
+    model_variant: default
     cost:
       usd: null
       note: unknown
@@ -25,9 +30,12 @@ entries:
       - skill
       - logging
 
-  - id: 2026-11-13T16-05-12Z-c3d4
+  - id: "2026-11-13T16-05-12Z-c3d4"
+    session_id: "sess-2026-11-13-a1b2"
+    session_started_at: "2026-11-13T18:23:00+03:00"
+    host: cursor
     timestamp: "2026-11-13T19:05:12+03:00"
-    since_t0: "T0 + 35m12s"
+    since_t0: "T0 + 40m37s"
     duration_sec: 95
     tokens:
       input: 9200
@@ -35,8 +43,9 @@ entries:
     user_request: |
       Prefer YAML over markdown; include cost, chosen variant, duration, T0 offset, and tokens.
     requested_model: auto
-    chosen_variant: alternative-1
+    chosen_variant: follow-up
     used_model: claude-opus-4-6
+    model_variant: high
     cost:
       usd: 0.0015
       note: openrouter

@@ -1,11 +1,15 @@
 # JSON Schema (YAML encoding) for one session-ledger day file.
 # Validators that accept YAML can load this as the document schema.
 $schema: https://json-schema.org/draft/2020-12/schema
-$title: SessionLedgerDay
-$type: object
+title: SessionLedgerDay
+type: object
 required: [date, entries]
 additionalProperties: false
 properties:
+  schema_version:
+    type: integer
+    const: 1
+    description: Ledger schema version. Omit for v1-compatible files.
   date:
     type: string
     pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
@@ -16,10 +20,17 @@ properties:
       $ref: "#/$defs/entry"
 
 $defs:
+  timestamp:
+    type: string
+    format: date-time
+    pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    description: ISO-8601 timestamp with an explicit offset (Z or ±HH:MM).
+
   entry:
     type: object
     required:
       - id
+      - session_id
       - timestamp
       - since_t0
       - duration_sec
@@ -34,16 +45,28 @@ $defs:
     properties:
       id:
         type: string
-        minLength: 1
-      timestamp:
+        pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2}Z-[A-Za-z0-9]{4,}$"
+        description: Unique within the day; UTC stamp plus a short suffix.
+      session_id:
         type: string
-        description: ISO-8601 timestamp with offset.
+        minLength: 1
+        description: Stable id for the agent conversation/session.
+      session_started_at:
+        anyOf:
+          - $ref: "#/$defs/timestamp"
+          - type: "null"
+        description: When the session started (T0), if known; null/omit if unknown.
+      host:
+        type: string
+        description: Host/agent that produced the entry (cursor, claude-code, codex, gemini-cli, …).
+      timestamp:
+        $ref: "#/$defs/timestamp"
       since_t0:
         type: string
         description: >-
-          Session timeline mark relative to T0 (session start), e.g.
+          Offset of this turn's start from T0 (session start), e.g.
           "T0 + 0s", "T0 + 20m50s", "T0 + 1h05m12s", bare "T0", or "unknown".
-        pattern: "^(T0|T0 \\+ (?:[0-9]+h(?:[0-9]+m)?(?:[0-9]+s)?|[0-9]+m(?:[0-9]+s)?|[0-9]+s)|unknown)$"
+        pattern: "^(T0|T0 \\+ (?:[1-9][0-9]*h(?:[0-5]?[0-9]m(?:[0-5]?[0-9]s)?)?|(?:[1-9]|[1-5][0-9])m(?:[0-5]?[0-9]s)?|(?:0|[1-9]|[1-5][0-9])s)|unknown)$"
       duration_sec:
         type: ["integer", "null"]
         minimum: 0
@@ -61,6 +84,14 @@ $defs:
             type: ["integer", "null"]
             minimum: 0
             description: Completion / output token count for the turn, or null if unknown.
+          cache_read:
+            type: ["integer", "null"]
+            minimum: 0
+            description: Optional cache-read token count.
+          cache_write:
+            type: ["integer", "null"]
+            minimum: 0
+            description: Optional cache-write token count.
       user_request:
         type: string
       requested_model:
@@ -68,9 +99,16 @@ $defs:
       chosen_variant:
         type: string
         description: >-
-          primary | alternative-N | follow-up | rejected | unknown | custom label
+          primary | alternative-N | follow-up | rejected | unknown | custom label.
+          Describes how this turn relates to the previous answer, as indicated by
+          the current user message.
       used_model:
         type: string
+      model_variant:
+        type: string
+        description: >-
+          Model variant / reasoning effort used for this turn, e.g. high, max,
+          low, default. Omit when the host does not expose one.
       cost:
         type: object
         required: [usd]
