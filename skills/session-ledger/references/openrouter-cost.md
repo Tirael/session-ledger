@@ -14,11 +14,16 @@ For **one ledger entry = one agent turn**, use the billed figure from the
 | `GET /api/v1/generation?id=gen-…` → `total_cost` | Yes — fallback | Same per-generation amount when the stream/host omitted `usage.cost` |
 | `GET /api/v1/activity` | **No for per-turn rows** | Daily/endpoint aggregates over completed UTC days — not a single turn |
 
+`usage.cost` is included automatically in OpenRouter responses; no extra
+request parameter is needed. This path applies when the agent itself makes the
+OpenRouter call and can see the response. If the host hides usage/cost, leave
+`cost.usd: null`.
+
 If a tool or agent says “per-turn cost unavailable: `/activity` returned 403”,
 that path is the wrong one for session-ledger. Fix the completion `usage`
 path (or generation id lookup). Do **not** treat `/activity` 403 as a reason
 to invent `cost.usd`; leave `null` until `usage.cost` / `total_cost` is
-available.
+available. A 403 can also mean the management key lacks `activity:view_all`.
 
 ### Mapping
 
@@ -26,6 +31,8 @@ available.
 tokens:
   input: 9200        # usage.prompt_tokens or usage.input_tokens
   output: 1100       # usage.completion_tokens or usage.output_tokens
+  # cache_read: 0    # optional: usage.prompt_tokens_details.cached_tokens
+  # cache_write: 0   # optional: usage.prompt_tokens_details.cache_write_tokens
 cost:
   usd: 0.0015        # usage.cost or generation total_cost
   note: openrouter
@@ -33,8 +40,11 @@ cost:
 
 - Several OpenRouter calls in one turn → **sum** costs and token counts.
 - Missing figure → `usd: null`, `note: unknown`.
-- OpenRouter cost is in **credits**; when 1 credit = $1, store as `cost.usd`.
-  Otherwise convert and set `note` (e.g. `openrouter-credits`).
+- If the request sets `reasoning.effort` (or a host-specific variant), store it
+  as `model_variant` in the ledger entry.
+- OpenRouter reports `usage.cost` in credits; credits are USD-denominated
+  (1 credit = $1), so store the figure in `cost.usd` with `note: openrouter`.
+  If a host reports a different unit, convert to USD and note the source.
 
 ## Management API key (for `/activity` and admin APIs)
 
@@ -76,7 +86,8 @@ Keep **two** secrets separate:
 
 1. Put values in a **gitignored** `.env` at the project root (or the host’s
    secret store — Cursor secrets, CI secrets, vault). Never commit real keys.
-2. Example (safe to commit as a template only):
+2. Example (safe to commit as a template only). The skill ships
+   `assets/env.example`; copy it to `.env` in the consumer project:
 
    ```bash
    # .env.example — copy to .env and fill locally
@@ -89,5 +100,7 @@ Keep **two** secrets separate:
    logs. Ledger `cost.note` may say `openrouter`; never paste the secret.
 
 If the agent host injects only `OPENROUTER_API_KEY`, that is enough for
-per-turn ledger cost via `usage.cost`. Add `OPENROUTER_MANAGEMENT_KEY` only
-when something explicitly needs Management API routes.
+per-turn ledger cost via `usage.cost` **when the agent itself makes the
+OpenRouter call**. If the host hides usage/cost, leave `cost.usd: null`.
+Add `OPENROUTER_MANAGEMENT_KEY` only when something explicitly needs
+Management API routes.

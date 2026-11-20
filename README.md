@@ -2,7 +2,7 @@
 
 **English** · [Русский](README.ru.md)
 
-Agent skill that appends a **local YAML ledger** after each turn: what was asked, which model path ran, where it sits on the session timeline (`T0 + …`), how long it took, token use, and (when known) cost.
+Agent skill that appends a **local YAML ledger** after each turn when active: what was asked, which model path ran, where it sits on the session timeline (`T0 + …`), how long it took, token use, and (when known) cost.
 
 Host-agnostic: works with Cursor, Claude Code, Codex, Gemini CLI, and any Agent Skills–compatible agent.
 
@@ -14,14 +14,29 @@ Copy `skills/session-ledger/` into the skills directory your agent loads:
 | --- | --- |
 | Cursor | `.cursor/skills/session-ledger/` or `.agents/skills/session-ledger/` |
 | Claude Code | `.claude/skills/session-ledger/` or `~/.claude/skills/session-ledger/` |
-| Codex | `.codex/skills/session-ledger/` or `~/.codex/skills/session-ledger/` |
+| Codex | `.agents/skills/session-ledger/` or `~/.agents/skills/session-ledger/` |
+| Gemini CLI | `.gemini/skills/session-ledger/` or `.agents/skills/session-ledger/` |
 | Generic / Agent Skills | `.agents/skills/session-ledger/` |
+
+Codex still reads the legacy `~/.codex/skills/` path, but `.agents/skills/` is the documented location.
+
+User-level paths: `~/.cursor/skills/` or `~/.agents/skills/` (Cursor),
+`~/.claude/skills/` (Claude Code), `~/.agents/skills/` (Codex),
+`~/.gemini/skills/` or `~/.agents/skills/` (Gemini CLI).
 
 Optional: this repo also has `.cursor-plugin/plugin.json` if you want to distribute it as a Cursor plugin — that packaging is optional, not required to use the skill.
 
 ### Manual invoke
 
-`/session-ledger` (where the host supports skill slash commands), or ask the agent to log the turn.
+`/session-ledger` where the host supports skill slash commands. In Codex use
+`$session-ledger` or `/skills`; in Gemini CLI use `/skills` or ask in natural
+language. You can also ask the agent to log the turn.
+
+### Automatic logging
+
+Agent Skills are loaded on demand. To log every turn without relying on the
+model to remember, add a host rule or hook. See
+`skills/session-ledger/references/host-hooks.md`.
 
 ## What gets logged
 
@@ -35,17 +50,22 @@ Required fields per entry:
 
 | Field | Meaning |
 | --- | --- |
+| `id` | Unique entry id (UTC stamp + suffix) |
+| `session_id` | Stable conversation/session id |
 | `timestamp` | When the turn finished (with timezone offset) |
-| `since_t0` | Timeline mark from session start, e.g. `T0 + 35m12s` |
+| `since_t0` | Offset of this turn's start from session start, e.g. `T0 + 35m12s` |
 | `duration_sec` | Wall-clock turn length in seconds, or `null` |
 | `tokens.input` | Input/prompt tokens, or `null` |
 | `tokens.output` | Output/completion tokens, or `null` |
 | `user_request` | What the user asked |
 | `requested_model` | Model the user asked for / selected |
-| `chosen_variant` | Which answer path the user took |
+| `chosen_variant` | How this turn relates to the previous answer |
 | `used_model` | Model that actually ran |
 | `cost.usd` | Spend if known, otherwise `null` |
 | `outcome` | Short result summary |
+
+Optional: `session_started_at`, `host`, `model_variant`, `tokens.cache_read`,
+`tokens.cache_write`, `cost.note`, `files_touched`, `tags`.
 
 Prefer provider-billed **per-turn** cost (OpenRouter `usage.cost` / generation
 `total_cost`), not `/activity` aggregates. Management key setup and `.env`
@@ -58,7 +78,13 @@ See `skills/session-ledger/assets/day.example.yaml` and `skills/session-ledger/r
 - **YAML** so you can filter/sort by model, timeline, duration, tokens, and cost.
 - **Append-only** daily files under `session-ledger/` — not tied to one IDE.
 - Structured turn metadata: models, variant, `since_t0`, duration, tokens, cost.
-- `since_t0` = `T0 + …` on the session timeline; `duration_sec` = length of this turn.
+- `since_t0` = offset of the turn start from `T0`; `duration_sec` = length of this turn.
+- `session_id` keeps multiple conversations in one day file distinguishable.
+
+## Privacy
+
+The ledger can contain user requests. Redact secrets, and review
+`session-ledger/` before committing it.
 
 ## License
 
