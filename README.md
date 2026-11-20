@@ -4,7 +4,7 @@
 
 Agent skill that appends a **local YAML ledger** after each turn when active: what was asked, which model path ran, where it sits on the session timeline (`T0 + …`), how long it took, token use, and (when known) cost.
 
-Host-agnostic: works with Cursor, Claude Code, Codex, Gemini CLI, and any Agent Skills–compatible agent.
+Host-agnostic: works with Cursor, Claude Code, OpenCode, Codex, Gemini CLI, and any Agent Skills–compatible agent.
 
 ## Install
 
@@ -16,6 +16,7 @@ Copy `skills/session-ledger/` into the skills directory your agent loads:
 | Claude Code | `.claude/skills/session-ledger/` or `~/.claude/skills/session-ledger/` |
 | Codex | `.agents/skills/session-ledger/` or `~/.agents/skills/session-ledger/` |
 | Gemini CLI | `.gemini/skills/session-ledger/` or `.agents/skills/session-ledger/` |
+| OpenCode | `.opencode/skills/session-ledger/` |
 | Generic / Agent Skills | `.agents/skills/session-ledger/` |
 
 Codex still reads the legacy `~/.codex/skills/` path, but `.agents/skills/` is the documented location.
@@ -25,6 +26,14 @@ User-level paths: `~/.cursor/skills/` or `~/.agents/skills/` (Cursor),
 `~/.gemini/skills/` or `~/.agents/skills/` (Gemini CLI).
 
 Optional: this repo also has `.cursor-plugin/plugin.json` if you want to distribute it as a Cursor plugin — that packaging is optional, not required to use the skill.
+
+OpenCode needs more than a skill: it loads skills on demand and does not emit
+`session.idle`, so this repo also ships `.opencode-plugin/`, a server plugin
+that appends an entry on `session.execution.succeeded`. Copy it to
+`.opencode/plugins/session-ledger/`; the ledger directory is `session-ledger`
+unless you pass a `directory` option. See
+`skills/session-ledger/references/host-hooks.md` for the event list and field
+mapping.
 
 ### Manual invoke
 

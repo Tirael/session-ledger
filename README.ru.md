@@ -4,7 +4,7 @@
 
 Скилл для агентов: после каждого хода (когда скилл активен) дописывает **локальный YAML-лог** — что спросили, какая модель, где ход на таймлайне сессии (`T0 + …`), длительность, токены и (если известна) стоимость.
 
-Не привязан к одному продукту: Cursor, Claude Code, Codex, Gemini CLI и любой хост с Agent Skills.
+Не привязан к одному продукту: Cursor, Claude Code, OpenCode, Codex, Gemini CLI и любой хост с Agent Skills.
 
 ## Установка
 
@@ -16,6 +16,7 @@
 | Claude Code | `.claude/skills/session-ledger/` или `~/.claude/skills/session-ledger/` |
 | Codex | `.agents/skills/session-ledger/` или `~/.agents/skills/session-ledger/` |
 | Gemini CLI | `.gemini/skills/session-ledger/` или `.agents/skills/session-ledger/` |
+| OpenCode | `.opencode/skills/session-ledger/` |
 | Generic / Agent Skills | `.agents/skills/session-ledger/` |
 
 Codex всё ещё читает legacy-путь `~/.codex/skills/`, но документированный путь — `.agents/skills/`.
@@ -25,6 +26,13 @@ Codex всё ещё читает legacy-путь `~/.codex/skills/`, но док
 `~/.gemini/skills/` или `~/.agents/skills/` (Gemini CLI).
 
 Опционально: в репозитории есть `.cursor-plugin/plugin.json` для публикации как Cursor plugin — для использования скилла это не обязательно.
+
+OpenCode требует большего, чем скилл: он загружает скиллы по требованию и не
+эмитит `session.idle`, поэтому в репозитории есть `.opencode-plugin/` — серверный
+плагин, который дописывает запись на `session.execution.succeeded`. Скопируйте
+его в `.opencode/plugins/session-ledger/`; каталог журнала — `session-ledger`,
+если не передать опцию `directory`. Список событий и маппинг полей — в
+`skills/session-ledger/references/host-hooks.md`.
 
 ### Ручной вызов
 
